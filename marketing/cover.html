@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>WordPop! cover</title>
+<style>
+  /* Store cover art. Rendered by marketing/build-assets.mjs at three exact
+     sizes; ?f=landscape|portrait|square picks the layout. Colours and type
+     mirror styles.css so the covers match the game. */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    font-family: "Baloo 2", "Trebuchet MS", "Comic Sans MS", system-ui, sans-serif;
+    background: linear-gradient(160deg, #7b5cff, #4dc9ff);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; text-align: center;
+  }
+
+  /* Soft light blooms so the flat gradient reads richer at thumbnail size. */
+  body::before, body::after {
+    content: ""; position: absolute; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,.28), transparent 70%);
+  }
+  body::before { width: 60%; padding-bottom: 60%; top: -18%; left: -12%; }
+  body::after  { width: 55%; padding-bottom: 55%; bottom: -22%; right: -14%; }
+
+  .wrap { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; }
+  .title {
+    font-weight: 800; letter-spacing: -.01em; line-height: .95;
+    text-shadow: 0 .06em 0 rgba(0,0,0,.18), 0 .12em .25em rgba(0,0,0,.28);
+  }
+  .tagline { font-weight: 700; color: rgba(255,255,255,.96); }
+
+  .tiles { display: flex; justify-content: center; }
+  .tile {
+    background: #ffd23f; color: #5a3d00; font-weight: 800;
+    border-radius: .22em; display: flex; align-items: center; justify-content: center;
+    text-transform: uppercase;
+  }
+  .slots { display: flex; justify-content: center; }
+  .slot {
+    background: rgba(255,255,255,.92); border-radius: .22em;
+    display: flex; align-items: center; justify-content: center;
+    color: #2a2350; font-weight: 800;
+  }
+  .pic { line-height: 1; filter: drop-shadow(0 .08em .1em rgba(0,0,0,.3)); }
+
+  /* ---------- Landscape 1920x1080 ---------- */
+  body.landscape .wrap { gap: 130px; }
+  body.landscape .pic { font-size: 300px; }
+  body.landscape .title { font-size: 200px; }
+  body.landscape .tagline { font-size: 54px; margin-top: 18px; }
+  body.landscape .tiles { gap: 22px; margin-top: 54px; }
+  body.landscape .tile { width: 132px; height: 150px; font-size: 92px; box-shadow: 0 14px 0 #e0a800; }
+  body.landscape .slots { gap: 22px; margin-top: 40px; }
+  body.landscape .slot { width: 132px; height: 150px; font-size: 92px; }
+
+  /* ---------- Portrait 800x1200 ---------- */
+  body.portrait .wrap { flex-direction: column; gap: 0; }
+  body.portrait .pic { font-size: 250px; }
+  body.portrait .title { font-size: 132px; margin-top: 26px; }
+  body.portrait .tagline { font-size: 36px; margin-top: 14px; }
+  body.portrait .tiles { gap: 16px; margin-top: 58px; }
+  body.portrait .tile { width: 104px; height: 120px; font-size: 74px; box-shadow: 0 11px 0 #e0a800; }
+
+  /* ---------- Square 800x800 ---------- */
+  body.square .wrap { flex-direction: column; gap: 0; }
+  body.square .pic { font-size: 210px; }
+  body.square .title { font-size: 116px; margin-top: 18px; }
+  body.square .tagline { font-size: 32px; margin-top: 10px; }
+  body.square .tiles { gap: 14px; margin-top: 40px; }
+  body.square .tile { width: 92px; height: 106px; font-size: 66px; box-shadow: 0 10px 0 #e0a800; }
+</style>
+</head>
+<body>
+  <div class="wrap" id="wrap"></div>
+<script>
+  const f = new URLSearchParams(location.search).get("f") || "landscape";
+  document.body.className = f;
+  const TITLE = `<div><h1 class="title">WordPop!</h1>
+                 <p class="tagline">See the picture. Spell the word.</p></div>`;
+  const TILES = (ls) => `<div class="tiles">${ls.map(l => `<div class="tile">${l}</div>`).join("")}</div>`;
+  const SLOTS = (ls) => `<div class="slots">${ls.map(l => `<div class="slot">${l}</div>`).join("")}</div>`;
+
+  const wrap = document.getElementById("wrap");
+  if (f === "landscape") {
+    // Picture on the left, wordmark on the right — reads the mechanic instantly.
+    wrap.innerHTML = `<div><div class="pic">🐱</div>${SLOTS(["c","a","t"])}</div>
+                      <div>${TITLE}${TILES(["t","a","c"])}</div>`;
+  } else {
+    wrap.innerHTML = `<div class="pic">🐱</div>${TITLE}${TILES(["t","a","c"])}`;
+  }
+</script>
+</body>
+</html>

@@ -1,2 +1,5 @@
 dist/
 *.zip
+marketing/frames/
+marketing/.chrome-profile/
+marketing/out/
