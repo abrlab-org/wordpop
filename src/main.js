@@ -160,8 +160,10 @@ function onCorrect() {
   platform.saveProgress(state.snapshot());
   const leveledUp = afterLevel > beforeLevel;
   setTimeout(() => {
-    if (leveledUp) ui.showLevelUp(afterLevel);
-    else nextRound();
+    if (leveledUp) {
+      platform.happytime(); // host-site celebration, milestones only
+      ui.showLevelUp(afterLevel);
+    } else nextRound();
   }, 1100);
 }
 

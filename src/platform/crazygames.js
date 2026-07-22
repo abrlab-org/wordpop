@@ -2,13 +2,20 @@
 //
 // SDK surface (per https://docs.crazygames.com/sdk/):
 //   await window.CrazyGames.SDK.init()
-//   window.CrazyGames.SDK.game.gameplayStart() / gameplayStop()
-//   window.CrazyGames.SDK.ad.requestAd("midgame"|"rewarded",
-//       { adStarted, adFinished, adError })   -- callback based, not a Promise
+//   SDK.game.loadingStart() / loadingStop()
+//   SDK.game.gameplayStart() / gameplayStop()
+//   SDK.game.happytime()                        -- site confetti, use sparingly
+//   SDK.game.settings.muteAudio                 -- boolean; overrides in-game audio
+//   SDK.game.addSettingsChangeListener(fn)      -- fires when settings change
+//   SDK.data.getItem(k) / setItem(k, v)         -- synced across the user's devices
+//   SDK.ad.requestAd("midgame"|"rewarded", { adStarted, adFinished, adError })
 //
-// CrazyGames provides no cloud save on the free tier, so progress uses local storage.
+// Progress uses the Data Module (not raw localStorage) so it syncs with the
+// player's CrazyGames account, which their submission flow asks about directly.
 
 import { localStore } from "./storage.js";
+
+const KEY = "wordpop_save";
 
 export function detect() {
   return typeof window !== "undefined" && !!window.CrazyGames?.SDK;
@@ -42,6 +49,7 @@ export function create() {
 
     async init() {
       try { await sdk.init(); } catch { /* continue anyway */ }
+      try { sdk.game?.loadingStart?.(); } catch {}
     },
 
     firstFrameReady() {},
@@ -50,14 +58,44 @@ export function create() {
     gameplayStart() { try { sdk.game?.gameplayStart?.(); } catch {} },
     gameplayStop() { try { sdk.game?.gameplayStop?.(); } catch {} },
 
+    // Fire the site's celebration effect on a genuine milestone (level-up only).
+    happytime() { try { sdk.game?.happytime?.(); } catch {} },
+
     async commercialBreak() { await requestAd("midgame"); },
     async rewardedBreak() { return await requestAd("rewarded"); },
 
-    saveProgress: localStore.save,
-    loadProgress: localStore.load,
+    // Data Module keeps progress synced to the CrazyGames account; fall back to
+    // local storage if it's unavailable (e.g. the game embedded on another site).
+    async saveProgress(obj) {
+      const json = JSON.stringify(obj || {});
+      try {
+        if (sdk.data?.setItem) { sdk.data.setItem(KEY, json); return; }
+      } catch {}
+      await localStore.save(obj);
+    },
+    async loadProgress() {
+      try {
+        if (sdk.data?.getItem) {
+          const raw = sdk.data.getItem(KEY);
+          if (raw) return JSON.parse(raw);
+          return null;
+        }
+      } catch {}
+      return await localStore.load();
+    },
 
-    isAudioEnabled() { return true; },
-    onAudioChange() { return () => {}; },
+    // CrazyGames' muteAudio setting must take priority over in-game audio.
+    isAudioEnabled() {
+      try { return !sdk.game?.settings?.muteAudio; } catch { return true; }
+    },
+    onAudioChange(cb) {
+      try {
+        const listener = (settings) => cb(!settings?.muteAudio);
+        sdk.game?.addSettingsChangeListener?.(listener);
+        return () => { try { sdk.game?.removeSettingsChangeListener?.(listener); } catch {} };
+      } catch { return () => {}; }
+    },
+
     onPause() { return () => {}; },
     onResume() { return () => {}; },
   };

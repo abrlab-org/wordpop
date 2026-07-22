@@ -30,6 +30,7 @@ export function create() {
     // Playables has no gameplay-event or ad API.
     gameplayStart() {},
     gameplayStop() {},
+    happytime() {},
     async commercialBreak() {},
     async rewardedBreak() { return false; },
 

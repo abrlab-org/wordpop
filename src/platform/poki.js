@@ -32,6 +32,7 @@ export function create() {
 
     gameplayStart() { try { p.gameplayStart?.(); } catch {} },
     gameplayStop() { try { p.gameplayStop?.(); } catch {} },
+    happytime() { try { p.happyTime?.(1); } catch {} },
 
     async commercialBreak() {
       try { await p.commercialBreak?.(); } catch { /* never block the game */ }

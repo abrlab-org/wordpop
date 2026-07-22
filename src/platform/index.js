@@ -7,7 +7,7 @@
 // Unified interface:
 //   name, supportsRewarded
 //   init(), firstFrameReady(), ready()
-//   gameplayStart(), gameplayStop()
+//   gameplayStart(), gameplayStop(), happytime()
 //   commercialBreak() -> Promise<void>
 //   rewardedBreak()   -> Promise<boolean>   (true = reward earned)
 //   saveProgress(obj) / loadProgress()      -> Promise
@@ -27,6 +27,7 @@ function createStandalone() {
     ready() {},
     gameplayStart() {},
     gameplayStop() {},
+    happytime() {},
     async commercialBreak() {},
     async rewardedBreak() { return false; },
     saveProgress: localStore.save,
