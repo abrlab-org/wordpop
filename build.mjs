@@ -3,17 +3,26 @@
 // The only thing that differs between portals is which host SDK script
 // index.html loads; src/platform/ detects the resulting global at runtime.
 //
-//   node build.mjs             # build every target
-//   node build.mjs poki        # build one target
+//   node build.mjs                    # build every target
+//   node build.mjs poki               # build one target
+//   node build.mjs poki --single      # single self-contained index.html
 //
-// Then zip the folder's CONTENTS (index.html must sit at the archive root):
+// Multi-file output: zip the folder's CONTENTS (index.html at the archive root):
 //   cd dist/poki && zip -r ../word-pop-poki.zip .
+//
+// --single inlines the CSS and bundles every module into one index.html, which
+// some portals require (CrazyGames rejects archives and wants files dropped
+// directly). Output lands in dist/<target>-single/index.html.
 
 import { readFile, writeFile, mkdir, rm, cp } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 
+const execFileAsync = promisify(execFile);
 const ROOT = dirname(fileURLToPath(import.meta.url));
+const ESBUILD = join(ROOT, "../../node_modules/.bin/esbuild");
 
 const SDK_TAGS = {
   youtube: '<script src="https://www.youtube.com/game_api/v1"></script>',
@@ -45,6 +54,48 @@ async function build(target) {
   console.log(`built dist/${target}/`);
 }
 
-const targets = process.argv.slice(2);
+// Single-file build: inline the stylesheet and the bundled JS into one index.html.
+async function buildSingle(target) {
+  const tag = SDK_TAGS[target];
+  if (!tag) throw new Error(`unknown target "${target}"`);
+
+  const outDir = join(ROOT, "dist", `${target}-single`);
+  await rm(outDir, { recursive: true, force: true });
+  await mkdir(outDir, { recursive: true });
+
+  // esbuild resolves the module graph; iife keeps it valid as a plain <script>.
+  const { stdout: js } = await execFileAsync(ESBUILD, [
+    join(ROOT, "src/main.js"),
+    "--bundle",
+    "--format=iife",
+    "--minify",
+    "--target=es2020",
+  ], { maxBuffer: 20 * 1024 * 1024 });
+
+  const css = await readFile(join(ROOT, "styles.css"), "utf8");
+  let html = await readFile(join(ROOT, "index.html"), "utf8");
+
+  html = html
+    .replace(SDK_BLOCK, `<!-- host SDK: ${target} -->\n  ${tag}`)
+    .replace(
+      '<link rel="stylesheet" href="styles.css" />',
+      `<style>\n${css}\n</style>`
+    )
+    .replace(
+      '<script type="module" src="src/main.js"></script>',
+      `<script>\n${js}\n</script>`
+    );
+
+  if (html.includes("styles.css") || html.includes("src/main.js")) {
+    throw new Error("single build still references external files");
+  }
+
+  await writeFile(join(outDir, "index.html"), html);
+  console.log(`built dist/${target}-single/index.html (${(html.length / 1024).toFixed(1)} KB, 1 file)`);
+}
+
+const args = process.argv.slice(2);
+const single = args.includes("--single");
+const targets = args.filter((a) => !a.startsWith("--"));
 const list = targets.length ? targets : Object.keys(SDK_TAGS);
-for (const t of list) await build(t);
+for (const t of list) await (single ? buildSingle(t) : build(t));

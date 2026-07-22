@@ -24,8 +24,21 @@ Zip the folder **contents** (`index.html` must sit at the archive root):
 
 ```bash
 cd dist/poki && zip -r ../word-pop-poki.zip . && cd -
-cd dist/crazygames && zip -r ../word-pop-crazygames.zip . && cd -
 ```
+
+### Single-file build (required by CrazyGames)
+
+**CrazyGames rejects archives** — "Archive files are not supported, please drag and
+drop the files directly in the upload zone." Rather than drag a folder tree, build
+the single-file variant: CSS and every module are inlined into one ~31 KB
+`index.html` with no external references except the host SDK.
+
+```bash
+node build.mjs crazygames --single   # -> dist/crazygames-single/index.html
+```
+
+Drag that one file into the upload zone. Verified to behave identically to the
+multi-file build, including Data Module saves.
 
 ---
 

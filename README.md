@@ -63,9 +63,14 @@ adapter at runtime by detecting which global exists, and falls back to standalon
 when none does.
 
 ```bash
-node build.mjs             # all targets -> dist/
-node build.mjs poki        # just one
+node build.mjs                    # all targets -> dist/
+node build.mjs poki               # just one
+node build.mjs crazygames --single  # one self-contained index.html (~31 KB)
 ```
+
+`--single` inlines the CSS and esbuild-bundles every module into a single
+`index.html` with no external references except the host SDK — needed by portals
+that reject archives and want files dropped directly.
 
 Every async hand-off to a host SDK is raced against a timeout, so a stalled or
 adblocked third-party script can never freeze the game.
