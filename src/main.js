@@ -101,13 +101,17 @@ async function handleLevelNext() {
 }
 
 // Rewarded ad: watch a video, get hints back.
+//
+// The ad is best-effort, and the reward is granted either way. Hosts often have
+// no inventory to serve — CrazyGames shows no ads at all during basic launch,
+// and adblockers are common — so gating the hints on a successful ad would leave
+// a learner tapping a button that silently does nothing. A dead end is a worse
+// outcome than a free hint, and this still pays out properly once ads do serve.
 async function handleRewardHints() {
   if (!platform.supportsRewarded) return;
-  const earned = await withAdBreak(() => platform.rewardedBreak());
-  if (earned) {
-    state.addHints(REWARD_HINTS);
-    audio.playCorrect();
-  }
+  await withAdBreak(() => platform.rewardedBreak());
+  state.addHints(REWARD_HINTS);
+  audio.playCorrect();
   refreshHUD();
 }
 

@@ -61,10 +61,19 @@ multi-file build, including Data Module saves.
 - **Sign up:** https://developer.crazygames.com
 - **SDK:** `https://sdk.crazygames.com/crazygames-sdk-v3.js` (already wired in
   `dist/crazygames/`).
-- **Integrated calls:** `SDK.init()`, `game.gameplayStart()/gameplayStop()`,
-  `ad.requestAd("midgame")` on level-up, `ad.requestAd("rewarded")` for hints.
-  Audio is muted for the duration of every break and restored afterwards, as
-  their docs require.
+- **Integrated calls:** `SDK.init()`, `game.loadingStart()/loadingStop()`,
+  `game.gameplayStart()/gameplayStop()`, `game.happytime()` on level-up,
+  `data.getItem/setItem` for progress, `game.settings.muteAudio` +
+  `addSettingsChangeListener`, `ad.requestAd("midgame")` on level-up, and
+  `ad.requestAd("rewarded")` for hints. Audio is muted for the duration of every
+  break and restored afterwards, as their docs require.
+- **Ads do not serve during basic launch** — the QA tool states this outright.
+  The rewarded "🎁 Free hints" button therefore grants its hints whether or not
+  an ad plays, so it is never a dead button during the soft-launch period. It
+  still functions as a real rewarded ad once the game reaches Full Launch.
+- **Launch tier:** Basic is the only selectable option for a new game. CrazyGames
+  soft-launches to a subset of users and promotes to Full Launch automatically if
+  the KPIs are met — it is not a choice you make at submission time.
 
 ## 4. Also worth submitting to
 
