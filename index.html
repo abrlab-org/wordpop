@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>WordPop! — Learn English</title>
+  <!-- YouTube Playables SDK: injected/served by the platform in production.
+       Must load before game code. Absent in local dev -> sdk.js falls back. -->
+  <script src="https://www.youtube.com/game_api/v1"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Loading screen -->
+    <section id="loading" class="screen is-active">
+      <div class="loading-logo">🎈</div>
+      <h1 class="loading-title">WordPop!</h1>
+      <p class="loading-sub">Learn English words</p>
+      <div class="loading-bar"><span id="loading-fill"></span></div>
+    </section>
+
+    <!-- Start screen -->
+    <section id="start" class="screen">
+      <div class="start-logo">🎈</div>
+      <h1 class="start-title">WordPop!</h1>
+      <p class="start-tagline">See the picture. Spell the word.</p>
+      <button id="play-btn" class="btn-primary" type="button">▶ Play</button>
+      <p class="start-hint">Tap the letters in order to build the word.</p>
+    </section>
+
+    <!-- Game screen -->
+    <section id="game" class="screen">
+      <header id="hud">
+        <div class="hud-item hud-theme"><span id="theme-label">Animals</span></div>
+        <div class="hud-item hud-score">⭐ <span id="score">0</span></div>
+        <div class="hud-item hud-streak">🔥 <span id="streak">0</span></div>
+      </header>
+
+      <div id="progress-track"><span id="progress-fill"></span></div>
+
+      <main id="stage">
+        <div id="picture" aria-label="picture clue">🐱</div>
+        <div id="slots" class="slots" aria-label="answer"></div>
+        <div id="tray" class="tray" aria-label="letters"></div>
+      </main>
+
+      <footer id="controls">
+        <button id="hint-letter" class="btn-hint" type="button">
+          💡 Hint <span class="hint-count" id="hints-left">3</span>
+        </button>
+        <button id="hint-say" class="btn-hint" type="button">🔊 Say it</button>
+        <button id="mute-btn" class="btn-icon" type="button" aria-label="mute">🔊</button>
+      </footer>
+
+      <!-- Celebration overlay -->
+      <div id="celebrate" class="celebrate" aria-hidden="true"></div>
+
+      <!-- Onboarding coach-mark (first round only) -->
+      <div id="tutorial" class="overlay" aria-hidden="true">
+        <div class="tutorial-card">
+          <div class="tutorial-emoji">👆</div>
+          <p class="tutorial-text">Tap the letters in order to spell the word!</p>
+          <button id="tutorial-ok" class="btn-primary btn-small" type="button">Got it!</button>
+        </div>
+      </div>
+
+      <!-- Level-up interstitial -->
+      <div id="levelup" class="overlay" aria-hidden="true">
+        <div class="levelup-card">
+          <div class="levelup-emoji">🏆</div>
+          <h2 class="levelup-title">Level <span id="levelup-num">2</span>!</h2>
+          <p class="levelup-sub" id="levelup-sub">Longer words ahead — you've got this!</p>
+          <button id="levelup-next" class="btn-primary btn-small" type="button">Continue ▶</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
