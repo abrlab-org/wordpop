@@ -40,6 +40,11 @@ export function createState() {
     s.streak = 0;
   }
 
+  // Grant extra hints (e.g. from a rewarded ad).
+  function addHints(n) {
+    s.hintsLeft += Math.max(0, n | 0);
+  }
+
   // Consume a hint if available; returns true if one was spent.
   function useHint() {
     if (s.hintsLeft <= 0) return false;
@@ -59,5 +64,5 @@ export function createState() {
     if (Number.isFinite(data.best)) s.best = data.best;
   }
 
-  return { raw: s, startWord, correct, wrong, useHint, snapshot, load };
+  return { raw: s, startWord, correct, wrong, useHint, addHints, snapshot, load };
 }

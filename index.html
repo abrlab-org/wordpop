@@ -4,9 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>WordPop! — Learn English</title>
-  <!-- YouTube Playables SDK: injected/served by the platform in production.
-       Must load before game code. Absent in local dev -> sdk.js falls back. -->
+  <!-- SDK:START — swapped per portal by build.mjs. Host SDKs must load before
+       game code. If none loads, src/platform/ falls back to standalone mode. -->
   <script src="https://www.youtube.com/game_api/v1"></script>
+  <!-- SDK:END -->
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -47,6 +48,9 @@
       <footer id="controls">
         <button id="hint-letter" class="btn-hint" type="button">
           💡 Hint <span class="hint-count" id="hints-left">3</span>
+        </button>
+        <button id="hint-reward" class="btn-hint btn-reward" type="button" hidden>
+          🎁 Free hints
         </button>
         <button id="hint-say" class="btn-hint" type="button">🔊 Say it</button>
         <button id="mute-btn" class="btn-icon" type="button" aria-label="mute">🔊</button>

@@ -162,6 +162,10 @@ body {
 }
 .btn-hint:active, .btn-icon:active { transform: translateY(2px); }
 .btn-hint:disabled { opacity: .45; cursor: default; }
+.btn-reward {
+  background: var(--tile); color: var(--tile-ink);
+  animation: bob 1.6s ease-in-out infinite;
+}
 .hint-count {
   background: var(--accent); color: #fff; border-radius: 999px;
   padding: 1px 8px; margin-left: 2px; font-size: 13px;

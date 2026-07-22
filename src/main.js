@@ -4,16 +4,19 @@ import { WORDS } from "./words.js";
 import { createWordBank, bandForLevel } from "./wordbank.js";
 import { createState } from "./state.js";
 import { createAudio } from "./audio.js";
-import { createSdk } from "./sdk.js";
+import { createPlatform } from "./platform/index.js";
 import { createUI } from "./ui.js";
 
-const sdk = createSdk();
+const platform = createPlatform();
 const audio = createAudio();
 const state = createState();
 const bank = createWordBank(WORDS);
 
 let current = null;      // current round: {word, emoji, theme, tiles}
 let locked = false;      // true during the correct-answer transition
+let adInFlight = false;  // guards against double-triggering an ad
+
+const REWARD_HINTS = 3;
 
 const ui = createUI({
   onPlay: startGame,
@@ -22,7 +25,8 @@ const ui = createUI({
   onHintLetter: handleHintLetter,
   onSay: () => current && audio.speak(current.word),
   onMute: toggleMute,
-  onLevelNext: () => { ui.hideLevelUp(); nextRound(); },
+  onLevelNext: handleLevelNext,
+  onRewardHints: handleRewardHints,
 });
 
 // Level = difficulty band offset so the first band reads as "Level 1".
@@ -30,7 +34,7 @@ const levelFromCleared = (cleared) => bandForLevel(cleared) - 2;
 
 // ---------- Boot ----------
 async function boot() {
-  sdk.firstFrameReady();
+  platform.firstFrameReady();
 
   // Fake-but-quick loading fill so the platform load signal feels intentional.
   let p = 0;
@@ -40,43 +44,93 @@ async function boot() {
     if (p >= 1) clearInterval(iv);
   }, 80);
 
+  // Portal SDKs (Poki, CrazyGames) must be initialized before anything else.
+  await platform.init();
+
   // Restore saved progress (score/cleared/best) if any.
-  const saved = await sdk.loadProgress();
+  const saved = await platform.loadProgress();
   state.load(saved);
 
   // Sync mute with the platform audio setting + subscribe to changes.
-  audio.setMuted(!sdk.isAudioEnabled());
+  audio.setMuted(!platform.isAudioEnabled());
   ui.setMuteIcon(audio.isMuted());
-  sdk.onAudioChange((enabled) => {
+  platform.onAudioChange((enabled) => {
     audio.setMuted(!enabled);
     ui.setMuteIcon(audio.isMuted());
   });
 
   setTimeout(() => {
     ui.showScreen("start");
-    sdk.ready();
+    platform.ready();
   }, 500);
 }
 
 function startGame() {
   audio.unlock(); // unlock WebAudio on the user gesture
   ui.showScreen("game");
+  platform.gameplayStart();
   nextRound();
 }
 
+// ---------- Ad helpers ----------
+// Run an ad break with gameplay stopped and audio muted, then restore both.
+// Never lets a failed or missing ad block the game.
+async function withAdBreak(run) {
+  if (adInFlight) return false;
+  adInFlight = true;
+  const wasMuted = audio.isMuted();
+  platform.gameplayStop();
+  audio.setMuted(true);
+  try {
+    return await run();
+  } catch {
+    return false;
+  } finally {
+    audio.setMuted(wasMuted);
+    ui.setMuteIcon(audio.isMuted());
+    platform.gameplayStart();
+    adInFlight = false;
+  }
+}
+
+// Level-up "Continue" is the natural interstitial slot.
+async function handleLevelNext() {
+  ui.hideLevelUp();
+  await withAdBreak(() => platform.commercialBreak());
+  nextRound();
+}
+
+// Rewarded ad: watch a video, get hints back.
+async function handleRewardHints() {
+  if (!platform.supportsRewarded) return;
+  const earned = await withAdBreak(() => platform.rewardedBreak());
+  if (earned) {
+    state.addHints(REWARD_HINTS);
+    audio.playCorrect();
+  }
+  refreshHUD();
+}
+
 // ---------- Round lifecycle ----------
+function refreshHUD() {
+  const snap = state.snapshot();
+  ui.updateHUD(snap);
+  // Offer the rewarded ad only when hints have run out and the host supports it.
+  ui.setRewardVisible(platform.supportsRewarded && snap.hintsLeft <= 0);
+}
+
 function nextRound() {
   locked = false;
   state.startWord();
   current = bank.next(state.raw.cleared);
   ui.renderRound(current);
-  ui.updateHUD(state.snapshot());
+  refreshHUD();
   // Coach-mark on the very first word only.
   if (state.raw.cleared === 0) ui.showTutorial();
 }
 
 function handleTileTap(tileId) {
-  if (locked) return;
+  if (locked || adInFlight) return;
   if (ui.isTutorialOpen()) ui.hideTutorial();
   const slot = ui.firstEmptySlot();
   if (slot === -1) return; // all slots full
@@ -86,16 +140,13 @@ function handleTileTap(tileId) {
 }
 
 function handleSlotTap(index) {
-  if (locked) return;
+  if (locked || adInFlight) return;
   ui.returnTile(index);
 }
 
 function checkAnswer() {
-  if (current && ui.currentAnswer() === current.word) {
-    onCorrect();
-  } else {
-    onWrong();
-  }
+  if (current && ui.currentAnswer() === current.word) onCorrect();
+  else onWrong();
 }
 
 function onCorrect() {
@@ -103,10 +154,10 @@ function onCorrect() {
   const beforeLevel = levelFromCleared(state.raw.cleared);
   state.correct();
   const afterLevel = levelFromCleared(state.raw.cleared);
-  ui.updateHUD(state.snapshot());
+  refreshHUD();
   audio.playCorrect();
   ui.celebrate();
-  sdk.saveProgress(state.snapshot());
+  platform.saveProgress(state.snapshot());
   const leveledUp = afterLevel > beforeLevel;
   setTimeout(() => {
     if (leveledUp) ui.showLevelUp(afterLevel);
@@ -118,7 +169,7 @@ function onWrong() {
   state.wrong();
   audio.playWrong();
   ui.shake();
-  ui.updateHUD(state.snapshot());
+  refreshHUD();
   // Forgiving: clear the wrong attempt so the learner retries.
   setTimeout(() => {
     for (let i = current.word.length - 1; i >= 0; i--) ui.returnTile(i);
@@ -127,7 +178,7 @@ function onWrong() {
 
 // Reveal the correct next letter by auto-placing a matching unused tile.
 function handleHintLetter() {
-  if (locked || !current) return;
+  if (locked || adInFlight || !current) return;
   const slot = ui.firstEmptySlot();
   if (slot === -1) return;
   if (!state.useHint()) return;
@@ -143,7 +194,7 @@ function handleHintLetter() {
     ui.placeTile(chosen.dataset.id, slot);
     audio.playTap();
   }
-  ui.updateHUD(state.snapshot());
+  refreshHUD();
   if (ui.isFull()) checkAnswer();
 }
 
@@ -153,7 +204,7 @@ function toggleMute() {
   if (!audio.isMuted()) audio.playTap();
 }
 
-// Pause/resume: cancel any speech when the platform pauses.
-sdk.onPause(() => { try { window.speechSynthesis?.cancel(); } catch {} });
+// Pause/resume: cancel any speech when the host pauses the game.
+platform.onPause(() => { try { window.speechSynthesis?.cancel(); } catch {} });
 
 boot();

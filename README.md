@@ -34,8 +34,9 @@ node test/wordbank.test.mjs
 ## Project layout
 
 ```
-index.html      Loads the ytgame SDK + the game module; three screens (loading/start/game)
+index.html      Host SDK block (swapped by build.mjs) + the game module
 styles.css      Bright/playful theme, responsive portrait + landscape
+build.mjs       Emits dist/<portal>/ bundles with the right SDK script tag
 src/
   words.js      142 themed beginner words, each with a single emoji (the "art")
   wordbank.js   Word sequencing + letter scrambling (pure, unit-tested)
@@ -43,19 +44,46 @@ src/
   ui.js         All DOM rendering + animations (emoji, slots, tiles, HUD, confetti,
                 onboarding coach-mark, level-up interstitial)
   audio.js      WebAudio-generated SFX + offline speech; respects mute
-  sdk.js        YouTube Playables (ytgame) wrapper with no-op fallback
   main.js       Round lifecycle + wiring
+  platform/     Host abstraction — one interface, four adapters
+    index.js      Detection + timeout guards around every async host call
+    youtube.js    YouTube Playables (window.ytgame)
+    poki.js       Poki (window.PokiSDK)
+    crazygames.js CrazyGames v3 (window.CrazyGames.SDK)
+    storage.js    localStorage progress store w/ in-memory fallback
 test/
   wordbank.test.mjs
 ```
+
+## Multi-portal builds
+
+The game runs on YouTube Playables, Poki, CrazyGames, or as a plain webpage. Only
+the SDK `<script>` in `index.html` differs; `src/platform/` picks the matching
+adapter at runtime by detecting which global exists, and falls back to standalone
+when none does.
+
+```bash
+node build.mjs             # all targets -> dist/
+node build.mjs poki        # just one
+```
+
+Every async hand-off to a host SDK is raced against a timeout, so a stalled or
+adblocked third-party script can never freeze the game.
+
+Ad breaks are wired to natural moments: an interstitial when the player clears a
+level, and an optional rewarded video behind the "🎁 Free hints" button that only
+appears when hints run out **and** the host supports rewarded ads. Audio is muted
+for the duration of any break and restored afterwards.
+
+See [SUBMISSION.md](SUBMISSION.md) for the portal submission guide and copy.
 
 ## YouTube Playables notes
 
 - **Self-contained:** all logic/art in the bundle; no network calls after load
   (emoji are the art, so there are zero image assets).
 - **SDK:** `index.html` loads `https://www.youtube.com/game_api/v1` before the game.
-  `src/sdk.js` wraps `window.ytgame` and calls `firstFrameReady()` / `gameReady()`,
-  saves/loads progress via `saveData`/`loadData`, and syncs mute with
+  `src/platform/youtube.js` wraps `window.ytgame` and calls `firstFrameReady()` /
+  `gameReady()`, saves/loads progress via `saveData`/`loadData`, and syncs mute with
   `isAudioEnabled()` / `onAudioEnabledChange`. Every call degrades to a safe no-op
   (progress falls back to `localStorage`) when the SDK is absent, so the game runs
   identically as a plain webpage during development.

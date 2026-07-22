@@ -24,6 +24,7 @@ export function createUI(handlers) {
     hintLetter: $("hint-letter"),
     hintsLeft: $("hints-left"),
     hintSay: $("hint-say"),
+    hintReward: $("hint-reward"),
     muteBtn: $("mute-btn"),
     celebrate: $("celebrate"),
     tutorial: $("tutorial"),
@@ -164,6 +165,11 @@ export function createUI(handlers) {
     els.muteBtn.textContent = muted ? "🔇" : "🔊";
   }
 
+  // Show the "watch an ad for hints" button (only when the host offers rewarded ads).
+  function setRewardVisible(visible) {
+    els.hintReward.hidden = !visible;
+  }
+
   function showTutorial() { els.tutorial.classList.add("show"); }
   function hideTutorial() { els.tutorial.classList.remove("show"); }
   function isTutorialOpen() { return els.tutorial.classList.contains("show"); }
@@ -185,6 +191,7 @@ export function createUI(handlers) {
   els.playBtn.addEventListener("click", () => handlers.onPlay());
   els.hintLetter.addEventListener("click", () => handlers.onHintLetter());
   els.hintSay.addEventListener("click", () => handlers.onSay());
+  els.hintReward.addEventListener("click", () => handlers.onRewardHints());
   els.muteBtn.addEventListener("click", () => handlers.onMute());
   els.tutorialOk.addEventListener("click", () => hideTutorial());
   els.levelupNext.addEventListener("click", () => handlers.onLevelNext());
@@ -203,6 +210,7 @@ export function createUI(handlers) {
     shake,
     celebrate,
     setMuteIcon,
+    setRewardVisible,
     showTutorial,
     hideTutorial,
     isTutorialOpen,
