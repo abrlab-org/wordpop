@@ -18,7 +18,8 @@ No build step — it's vanilla ES modules. Serve the folder over HTTP (ES module
 don't load from `file://`):
 
 ```bash
-cd playables/word-pop
+cd web-games/word-pop
+pnpm install
 python3 -m http.server 8231
 # open http://localhost:8231/index.html
 ```
@@ -28,7 +29,7 @@ python3 -m http.server 8231
 Pure game logic has unit tests (no browser needed):
 
 ```bash
-node test/wordbank.test.mjs
+pnpm test
 ```
 
 ## Project layout
@@ -63,9 +64,9 @@ adapter at runtime by detecting which global exists, and falls back to standalon
 when none does.
 
 ```bash
-node build.mjs                    # all targets -> dist/
-node build.mjs poki               # just one
-node build.mjs crazygames --single  # one self-contained index.html (~31 KB)
+pnpm build                            # all targets -> dist/
+node build.mjs poki                   # just one
+pnpm build:single                     # one self-contained index.html (~31 KB)
 ```
 
 `--single` inlines the CSS and esbuild-bundles every module into a single
@@ -102,7 +103,7 @@ See [SUBMISSION.md](SUBMISSION.md) for the portal submission guide and copy.
 Zip the contents of this folder (with `index.html` at the archive root):
 
 ```bash
-cd playables/word-pop
+cd web-games/word-pop
 zip -r ../word-pop.zip . -x '*.DS_Store' 'test/*'
 ```
 

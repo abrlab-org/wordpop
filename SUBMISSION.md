@@ -12,7 +12,7 @@ ready to paste into the submission forms.
 ## 1. Build the bundles
 
 ```bash
-cd playables/word-pop
+cd web-games/word-pop
 node build.mjs
 ```
 

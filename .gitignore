@@ -3,3 +3,8 @@ dist/
 marketing/frames/
 marketing/.chrome-profile/
 marketing/out/
+android/build/
+android/app/build/
+android/.gradle/
+android/local.properties
+android/keystore.properties
