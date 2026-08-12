@@ -17,6 +17,7 @@ import { localStore } from "./storage.js";
 import * as youtube from "./youtube.js";
 import * as poki from "./poki.js";
 import * as crazygames from "./crazygames.js";
+import * as admob from "./admob.js";
 
 function createStandalone() {
   return {
@@ -39,7 +40,9 @@ function createStandalone() {
   };
 }
 
-const ADAPTERS = [youtube, poki, crazygames];
+// admob is probed first: inside the Capacitor WebView none of the portal
+// globals exist, and checking the native bridge is the cheapest test.
+const ADAPTERS = [admob, youtube, poki, crazygames];
 
 // Host SDKs are third-party code loaded from a CDN. Outside their own site (or
 // behind an adblocker) a call can reject or simply never settle, so every async

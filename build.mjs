@@ -22,13 +22,16 @@ import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
 const ROOT = dirname(fileURLToPath(import.meta.url));
-const ESBUILD = join(ROOT, "../../node_modules/.bin/esbuild");
+const ESBUILD = join(ROOT, "node_modules/.bin/esbuild");
 
 const SDK_TAGS = {
   youtube: '<script src="https://www.youtube.com/game_api/v1"></script>',
   poki: '<script src="https://game-cdn.poki.com/scripts/v2/poki-sdk.js"></script>',
   crazygames: '<script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>',
   standalone: "<!-- no host SDK: runs in standalone mode -->",
+  // Capacitor loads no remote SDK: the AdMob plugin arrives on the native
+  // bridge, which src/platform/admob.js detects at runtime.
+  capacitor: "<!-- no host SDK: native bridge provides AdMob -->",
 };
 
 const SDK_BLOCK = /<!-- SDK:START[\s\S]*?<!-- SDK:END -->/;

@@ -1,0 +1,11 @@
+{
+  "appId": "com.abrlab.wordpop",
+  "appName": "WordPop",
+  "webDir": "dist/capacitor-single",
+  "android": {
+    "backgroundColor": "#7B5CFF"
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}
