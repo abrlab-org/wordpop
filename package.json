@@ -1,0 +1,23 @@
+{
+  "name": "word-pop-web-game",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "build:single": "node build.mjs crazygames --single",
+    "test": "node test/wordbank.test.mjs",
+    "build:capacitor": "node build.mjs capacitor --single",
+    "android:sync": "npm run build:capacitor && npx cap sync android",
+    "android:build": "npm run android:sync && cd android && ./gradlew app:assembleDebug -x lint -x test"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.0",
+    "esbuild": "0.28.1"
+  },
+  "dependencies": {
+    "@capacitor-community/admob": "^8.0.0",
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/core": "^8.5.0"
+  }
+}

@@ -94,4 +94,24 @@ test("no duplicate words in the vocabulary", () => {
   assert.strictEqual(new Set(words).size, words.length, "duplicate word entries exist");
 });
 
+// The emoji IS the clue, so two words sharing one makes a round unanswerable:
+// the player sees 🐴 and cannot know whether we want "horse" or "pony".
+test("no duplicate emoji in the vocabulary", () => {
+  const seen = new Map();
+  for (const w of WORDS) {
+    const prev = seen.get(w.emoji);
+    assert.ok(!prev, `emoji ${w.emoji} used by both "${prev}" and "${w.word}"`);
+    seen.set(w.emoji, w.word);
+  }
+});
+
+// Difficulty opens with 3-letter words and widens by one letter every 4 clears,
+// so every band needs stock or the ramp stalls on a tiny pool.
+test("every difficulty band has enough words", () => {
+  for (let len = 3; len <= 8; len++) {
+    const n = WORDS.filter((w) => w.word.length === len).length;
+    assert.ok(n >= 20, `only ${n} words of length ${len} (need >= 20)`);
+  }
+});
+
 console.log(`\n${passed} tests passed`);
